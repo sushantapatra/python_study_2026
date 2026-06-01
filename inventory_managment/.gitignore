@@ -1,0 +1,11 @@
+# .gitignore
+.env
+venv/
+__pycache__/
+*.pyc
+db.sqlite3
+storage/logs/*.log
+.pytest_cache/
+htmlcov/
+.coverage
+.coverage.*
