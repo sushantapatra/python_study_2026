@@ -25,6 +25,7 @@ UserManager:
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, BaseUserManager
 from django.utils import timezone
+from .role import Role
 
 
 class UserManager(BaseUserManager):
@@ -105,7 +106,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     # settings.py mein AUTH_USER_MODEL set hone ke baad
     # Role aur User ek dusre ko refer kar sakte hain
     role = models.ForeignKey(
-        "roles.Role",
+        Role,
         null=True,
         blank=True,
         on_delete=models.SET_NULL,

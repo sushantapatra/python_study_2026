@@ -34,6 +34,9 @@ Permission check example:
 
 from django.db import models
 from core.models import BaseModel
+from .role import Role
+from .menu import Menu
+from .action import Action
 
 
 class RolePermission(BaseModel):
@@ -46,19 +49,19 @@ class RolePermission(BaseModel):
     """
 
     role = models.ForeignKey(
-        "users.Role",
+        Role,
         on_delete=models.CASCADE,
         related_name="permissions",
         db_column="role_id",
     )
     menu = models.ForeignKey(
-        "users.Menu",
+        Menu,
         on_delete=models.CASCADE,
         related_name="permissions",
         db_column="menu_id",
     )
     action = models.ForeignKey(
-        "users.Action",
+        Action,
         on_delete=models.CASCADE,
         related_name="permissions",
         db_column="action_id",
