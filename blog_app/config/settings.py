@@ -11,6 +11,8 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
 from pathlib import Path
+from datetime import timedelta
+from decouple import config, Csv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -23,9 +25,11 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-af5vfy^j@na(zrjr%gxk6$*@j*(yc9ccykvwgl3*xhnw)kvv=-'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+# DEBUG = True
 
-ALLOWED_HOSTS = []
+# ALLOWED_HOSTS = []
+DEBUG = config("DEBUG", default=False, cast=bool)
+ALLOWED_HOSTS = config("ALLOWED_HOSTS", default="localhost", cast=Csv())
 
 
 # Application definition
@@ -37,16 +41,33 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    #THIRD_PARTY_APPS
+    "django.contrib.postgres",                  # PostgreSQL-specific features (FTS, JSONField, etc.)
+    "rest_framework",                           # Django REST Framework
+    "rest_framework_simplejwt",                 # JWT Authentication
+    "rest_framework_simplejwt.token_blacklist", # Token blacklist (logout ke liye)
+    "corsheaders",                              # CORS — React frontend allow karne ke liye
+    "django_filters",                           # List API mein filtering ke liye
+    "drf_spectacular",                          # Swagger/OpenAPI documentation
+    "django_extensions",                        # Extra management commands (shell_plus, etc.)  
+    #LOCAL_APPS  
+    #"core",   
+    "users",
+    "blog",                   
 ]
+
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    "corsheaders.middleware.CorsMiddleware",           # CORS — sabse upar chahiye
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    # Hamara custom middleware Step 9 mein add hoga:
+    # "core.middleware.activity_log.ActivityLogMiddleware",
 ]
 
 ROOT_URLCONF = 'config.urls'
@@ -67,51 +88,212 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'config.wsgi.application'
-
+ASGI_APPLICATION = "config.asgi.application"
 
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
+# ─────────────────────────────────────────────────────────────
+# DATABASE — PostgreSQL
+# psycopg2-binary → Python aur PostgreSQL ke beech ka bridge
+# CONN_MAX_AGE → connection pooling: 60 sec tak same connection reuse
+# ─────────────────────────────────────────────────────────────
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+    # 'default': {
+    #     'ENGINE': 'django.db.backends.sqlite3',
+    #     'NAME': BASE_DIR / 'db.sqlite3',
+    # }
+     "default": {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": config("DB_NAME"),
+        "USER": config("DB_USER"),
+        "PASSWORD": config("DB_PASSWORD"),
+        "HOST": config("DB_HOST", default="localhost"),
+        "PORT": config("DB_PORT",default="5432"),
+        "CONN_MAX_AGE": 60,
+        "OPTIONS": {
+            "connect_timeout": 10,
+        },
     }
 }
+
+# ─────────────────────────────────────────────────────────────
+# CUSTOM USER MODEL
+# Django ko batao ki hamara custom User model use karo.
+# Yeh setting pehli migration se pehle set honi chahiye —
+# baad mein change karna bahut complex hota hai.
+# ─────────────────────────────────────────────────────────────
+AUTH_USER_MODEL = "users.User"
 
 
 # Password validation
 # https://docs.djangoproject.com/en/6.0/ref/settings/#auth-password-validators
 
 AUTH_PASSWORD_VALIDATORS = [
-    {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
-    },
+    {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',"OPTIONS": {"min_length": 8}},
+    {'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
 ]
 
 
 # Internationalization
 # https://docs.djangoproject.com/en/6.0/topics/i18n/
 
+# ─────────────────────────────────────────────────────────────
+# INTERNATIONALIZATION
+# Asia/Kolkata → IST timezone
+# USE_TZ = True → sab timestamps timezone-aware rahenge (best practice)
+# ─────────────────────────────────────────────────────────────
+
 LANGUAGE_CODE = 'en-us'
-
-TIME_ZONE = 'UTC'
-
+TIME_ZONE = "Asia/Kolkata"
+# TIME_ZONE = 'UTC'
 USE_I18N = True
-
 USE_TZ = True
 
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
-STATIC_URL = 'static/'
+# ─────────────────────────────────────────────────────────────
+# STATIC & MEDIA FILES
+# STATIC_ROOT → collectstatic command yahan files copy karega (production)
+# MEDIA_ROOT  → user uploaded files yahan save honge
+# ─────────────────────────────────────────────────────────────
+STATIC_URL = config("STATIC_URL", default="/static/")
+STATIC_ROOT = BASE_DIR / "staticfiles"
+ 
+MEDIA_URL = config("MEDIA_URL", default="/media/")
+MEDIA_ROOT = BASE_DIR / "media"
+
+# ─────────────────────────────────────────────────────────────
+# DEFAULT PRIMARY KEY
+# BigAutoField → 64-bit integer PK (large dataset ke liye best)
+# ─────────────────────────────────────────────────────────────
+DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+# ─────────────────────────────────────────────────────────────
+# DJANGO REST FRAMEWORK
+# JWTAuthentication  → session-less, scalable auth
+# IsAuthenticated    → by default sab APIs protected
+# AutoSchema         → drf-spectacular ke saath Swagger auto-generate
+# ─────────────────────────────────────────────────────────────
+REST_FRAMEWORK = {
+    "DEFAULT_AUTHENTICATION_CLASSES": (
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
+    ),
+    "DEFAULT_PERMISSION_CLASSES": (
+        "rest_framework.permissions.IsAuthenticated",
+    ),
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+    "DEFAULT_FILTER_BACKENDS": [
+        "django_filters.rest_framework.DjangoFilterBackend",
+        "rest_framework.filters.SearchFilter",
+        "rest_framework.filters.OrderingFilter",
+    ],
+    "EXCEPTION_HANDLER": "core.exceptions.custom_exception_handler",
+    "DEFAULT_RENDERER_CLASSES": [
+        "rest_framework.renderers.JSONRenderer",
+    ],
+}
+ 
+# ─────────────────────────────────────────────────────────────
+# JWT SETTINGS
+# ACCESS_TOKEN  → short-lived (60 min) — API calls ke liye
+# REFRESH_TOKEN → long-lived (7 days) — naya access token lene ke liye
+# ROTATE_REFRESH_TOKENS → refresh karte waqt naya refresh token milega
+# BLACKLIST_AFTER_ROTATION → purana token blacklist (secure logout)
+# ─────────────────────────────────────────────────────────────
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(
+        minutes=config("JWT_ACCESS_TOKEN_LIFETIME_MINUTES", default=60, cast=int)
+    ),
+    "REFRESH_TOKEN_LIFETIME": timedelta(
+        days=config("JWT_REFRESH_TOKEN_LIFETIME_DAYS", default=7, cast=int)
+    ),
+    "ROTATE_REFRESH_TOKENS": True,
+    "BLACKLIST_AFTER_ROTATION": True,
+    "UPDATE_LAST_LOGIN": True,
+    "ALGORITHM": "HS256",
+    "SIGNING_KEY": config("SECRET_KEY"),
+    "AUTH_HEADER_TYPES": ("Bearer",),
+    "AUTH_HEADER_NAME": "HTTP_AUTHORIZATION",
+    "USER_ID_FIELD": "id",
+    "USER_ID_CLAIM": "user_id",
+}
+# ─────────────────────────────────────────────────────────────
+# CORS SETTINGS
+# React (localhost:3000) se API calls allow karne ke liye
+# ─────────────────────────────────────────────────────────────
+CORS_ALLOWED_ORIGINS = config(
+    "CORS_ALLOWED_ORIGINS",
+    default="http://localhost:3000",
+    cast=Csv(),
+)
+CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_HEADERS = [
+    "accept",
+    "accept-encoding",
+    "authorization",
+    "content-type",
+    "dnt",
+    "origin",
+    "user-agent",
+    "x-csrftoken",
+    "x-requested-with",
+]
+ 
+ 
+# ─────────────────────────────────────────────────────────────
+# DRF SPECTACULAR — Swagger / OpenAPI Docs
+# ─────────────────────────────────────────────────────────────
+SPECTACULAR_SETTINGS = {
+    "TITLE": "Tech Blog API",
+    "DESCRIPTION": (
+        "Tech Blog platform ke liye RESTful API. "
+        "Authentication, posts, comments aur user management."
+    ),
+    "VERSION": "1.0.0",
+    "SERVE_INCLUDE_SCHEMA": False,
+    "COMPONENT_SPLIT_REQUEST": True,
+    "SCHEMA_PATH_PREFIX": "/api/v1/",
+}
+ 
+ 
+# ─────────────────────────────────────────────────────────────
+# LOGGING
+# ─────────────────────────────────────────────────────────────
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "verbose": {
+            "format": "[{asctime}] {levelname} {name} — {message}",
+            "style": "{",
+            "datefmt": "%Y-%m-%d %H:%M:%S",
+        },
+    },
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+            "formatter": "verbose",
+        },
+    },
+    "root": {
+        "handlers": ["console"],
+        "level": "INFO",
+    },
+    "loggers": {
+        "django": {
+            "handlers": ["console"],
+            "level": "INFO",
+            "propagate": False,
+        },
+        "django.db.backends": {
+            "handlers": ["console"],
+            "level": "WARNING",
+            "propagate": False,
+        },
+    },
+}

@@ -14,9 +14,45 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
+
+"""
+config/urls.py — Main URL Configuration
+ 
+URL structure:
+    /api/v1/      → sab API routes
+    /api/docs/    → Swagger UI
+    /api/redoc/   → ReDoc UI
+    /api/schema/  → OpenAPI schema (machine-readable)
+"""
+
 from django.contrib import admin
-from django.urls import path
+from django.urls import path, include
+from django.conf import settings
+from django.conf.urls.static import static
+from drf_spectacular.views import (
+    SpectacularAPIView,
+    SpectacularSwaggerView,
+    SpectacularRedocView,
+)
 
 urlpatterns = [
+    # Django Admin
     path('admin/', admin.site.urls),
+
+    # API Documentation
+    path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
+    path("api/docs/",   SpectacularSwaggerView.as_view(url_name="schema"), name="swagger-ui"),
+    path("api/redoc/",  SpectacularRedocView.as_view(url_name="schema"),   name="redoc"),
+    
+    # ─────────────────────────────────────────────
+    # App URLs — Step 4 se aage add hote rahenge:
+    # path("api/v1/auth/",  include("users.urls")),
+    # path("api/v1/roles/", include("roles.urls")),
+    # path("api/v1/posts/", include("posts.urls")),
+    # ─────────────────────────────────────────────
 ]
+# Development mein media files Django se serve karo
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+ 
