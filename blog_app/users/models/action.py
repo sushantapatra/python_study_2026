@@ -51,7 +51,7 @@ class Action(BaseModel):
         indexes = [
             models.Index(fields=["code"],       name="idx_actions_code"),
             models.Index(fields=["status"],     name="idx_actions_status"),
-            models.Index(fields=["is_deleted"], name="idx_actions_is_deleted"),
+            models.Index(fields=["deleted_at"], name="idx_actions_deleted_at"),
         ]
 
     def __str__(self):

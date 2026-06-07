@@ -19,7 +19,7 @@ class UserAdmin(BaseUserAdmin):
     """
 
     list_display  = ("email", "first_name", "last_name", "is_active", "is_staff", "created_at")
-    list_filter   = ("is_active", "is_staff", "is_email_verified", "is_deleted")
+    list_filter   = ("is_active", "is_staff", "is_email_verified")
     search_fields = ("email", "first_name", "last_name")
     ordering      = ("-created_at",)
     readonly_fields = ("created_at", "updated_at", "last_login")
@@ -31,7 +31,7 @@ class UserAdmin(BaseUserAdmin):
         ("Permissions",  {"fields": ("is_active", "is_staff", "is_superuser",
                                       "is_email_verified", "groups", "user_permissions")}),
         ("Audit",        {"fields": ("created_at", "updated_at", "last_login")}),
-        ("Soft Delete",  {"fields": ("is_deleted", "deleted_at", "deleted_by")}),
+        ("Soft Delete",  {"fields": ("deleted_at", "deleted_by")}),
     )
 
     add_fieldsets = (

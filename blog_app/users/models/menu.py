@@ -75,7 +75,7 @@ class Menu(BaseModel):
             models.Index(fields=["code"],       name="idx_menus_code"),
             models.Index(fields=["parent"],     name="idx_menus_parent"),
             models.Index(fields=["status"],     name="idx_menus_status"),
-            models.Index(fields=["is_deleted"], name="idx_menus_is_deleted"),
+            models.Index(fields=["deleted_at"], name="idx_menus_deleted_at"),
         ]
 
     def __str__(self):

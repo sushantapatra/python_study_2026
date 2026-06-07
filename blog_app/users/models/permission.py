@@ -28,7 +28,6 @@ Permission check example:
         role=user.role,
         menu__code="posts_management",
         action__code="add",
-        is_deleted=False,
     ).exists()
 """
 
@@ -71,9 +70,9 @@ class RolePermission(BaseModel):
         db_table = "role_permissions"
         unique_together = ("role", "menu", "action")
         indexes = [
-            models.Index(fields=["role", "menu"],         name="idx_rp_role_menu"),
+            models.Index(fields=["role", "menu"],           name="idx_rp_role_menu"),
             models.Index(fields=["role", "menu", "action"], name="idx_rp_role_menu_action"),
-            models.Index(fields=["is_deleted"],           name="idx_rp_is_deleted"),
+            models.Index(fields=["deleted_at"],             name="idx_rp_deleted_at"),
         ]
 
     def __str__(self):

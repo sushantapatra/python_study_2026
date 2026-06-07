@@ -46,10 +46,8 @@ urlpatterns = [
     
     # ─────────────────────────────────────────────
     # App URLs — Step 4 se aage add hote rahenge:
-    # path("api/v1/auth/",  include("users.urls")),
-    # path("api/v1/roles/", include("roles.urls")),
-    # path("api/v1/posts/", include("posts.urls")),
-    # ─────────────────────────────────────────────
+    path("api/v1/", include("users.urls")),   # Roles, Menus, Actions, Permissions
+    # path("api/v1/", include("posts.urls")), # Step 6 mein
 ]
 # Development mein media files Django se serve karo
 if settings.DEBUG:
